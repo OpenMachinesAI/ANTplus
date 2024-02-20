@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat App</title>
+  <style>
+    .chat-container {
+      width: 400px;
+      margin: 20px auto;
+    }
+
+    .chat {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: scroll;
+    }
+
+    .user-image, .ai-thinking {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat" id="chat"></div>
+    <input type="text" id="userInput" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <img src="user_image.jpg" alt="User Image" class="user-image" id="userImage">
+  <img src="ai_thinking_image.gif" alt="AI Thinking" class="ai-thinking" id="aiThinking">
+
+  <script>
+    const chatContainer = document.getElementById('chat');
+    const userInput = document.getElementById('userInput');
+    const userImage = document.getElementById('userImage');
+    const aiThinking = document.getElementById('aiThinking');
+
+    let messages = [];
+
+    function sendMessage() {
+      const message = userInput.value.trim();
+      if (message === '') return;
+
+      // Display user message
+      displayMessage('user', message);
+      
+      // Show AI thinking image
+      showAiThinking();
+
+      // Call API
+      callApi(message);
+      
+      // Clear input
+      userInput.value = '';
+    }
+
+    function displayMessage(role, content) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add(role);
+      messageDiv.textContent = content;
+      chatContainer.appendChild(messageDiv);
+
+      // Scroll to bottom
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function showAiThinking() {
+      userImage.style.display = 'none';
+      aiThinking.style.display = 'block';
+    }
+
+    function hideAiThinking() {
+      userImage.style.display = 'block';
+      aiThinking.style.display = 'none';
+    }
+
+    function callApi(message) {
+      // Call the API using Fetch
+      fetch("https://api.deepinfra.com/v1/openai/chat/completions", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer YOUR_API_TOKEN_HERE' // Replace with your API token
+        },
+        body: JSON.stringify({
+          "model": "mistralai/Mistral-7B-Instruct-v0.1",
+          "messages": [
+            {
+              "role": "user",
+              "content": message
+            }
+          ]
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Display AI response
+        const aiResponse = data.choices[0].message.content;
+        displayMessage('ai', aiResponse);
+        hideAiThinking();
+        // Save AI response
+        messages.push({ role: 'ai', content: aiResponse });
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        hideAiThinking();
+      });
+    }
+  </script>
+</body>
+</html>
